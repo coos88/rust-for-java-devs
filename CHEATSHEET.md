@@ -320,7 +320,35 @@ Async: `async fn`, `.await`, needs a runtime (`tokio`). `Future` ≈ `Completabl
 
 ## Macros
 `name!(...)`. Code generation at compile time. `println!`, `vec!`, `format!`, `assert_eq!`, `todo!()`, `unimplemented!()`, `dbg!(x)`.
-`#[derive(...)]` and `#[attr]` ≈ annotations, but they generate code at compile time.
+
+## Attributes (≈ annotations)
+`#[attr]` applies to the next item. `#![attr]` (with `!`) applies to the enclosing file/module/crate, e.g. at the top of `main.rs`.
+
+**Key difference:** attributes act only at compile time. They generate code, toggle code, or configure the compiler. There's no runtime reflection, so nothing can "scan for" an attribute while the program runs. That's why Spring-style frameworks don't exist.
+
+| Rust | Java | what |
+|---|---|---|
+| `#[derive(Debug, Clone, PartialEq)]` | Lombok `@ToString @EqualsAndHashCode` | generate trait impls |
+| `#[test]`, `#[should_panic]` | `@Test`, `assertThrows` | mark tests |
+| `#[cfg(test)]` | none | compile this only for `cargo test` |
+| `#[cfg(target_os = "macos")]` | none (runtime `if`) | compile only on that platform. The code doesn't exist elsewhere |
+| `#[cfg(feature = "json")]` | none | compile only when a Cargo feature is on |
+| `#[allow(dead_code)]`, `#[deny(..)]` | `@SuppressWarnings` | tune lints |
+| `#[deprecated(note = "use y")]` | `@Deprecated` | warn callers |
+| `#[must_use]` | `@CheckReturnValue` | warn if the result is ignored. `Result` has it built in |
+| `#[non_exhaustive]` | none | others can't exhaustively match your enum, so you can add variants later |
+| `#[inline]` | none (JIT decides) | hint to inline across crates |
+| `#[repr(C)]` | none | C memory layout, for FFI |
+| `/// docs` | `/** javadoc */` | sugar for `#[doc = "..."]`. Markdown, shown by `cargo doc` |
+
+From crates (procedural macros, run by the compiler):
+```rust
+#[tokio::main]                        // rewrites async main into a runtime setup
+#[derive(Serialize, Deserialize)]     // serde generates (de)serialization code
+#[serde(rename = "itemName")]         // field-level config, read by serde's derive
+#[derive(clap::Parser)]               // CLI parser from a struct
+```
+Writing your own attribute = a procedural macro in a separate crate (`syn` + `quote`). Far heavier than declaring a Java `@interface`, and rarely needed.
 
 ## Testing
 ```rust
