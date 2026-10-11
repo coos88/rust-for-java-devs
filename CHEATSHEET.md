@@ -17,6 +17,21 @@
 
 No `null`. Use `Option<T>`.
 
+### Signed vs unsigned
+Same bits, different range. Signed spends one bit on the sign.
+
+| type | range | Java |
+|---|---|---|
+| `i8` | -128..127 | `byte` |
+| `u8` | 0..255 | none (raw bytes, `&[u8]`) |
+| `i32` | ±2.1 billion | `int` (the default for integer literals) |
+| `u32` | 0..4.2 billion | none |
+| `i64` / `u64` | ±9.2e18 / 0..1.8e19 | `long` / none |
+| `usize` | 0..platform max (64-bit on your Mac) | `int` as used for indexes |
+
+Java has no unsigned types (except `char`). Use `u*` when negative values make no sense (lengths, counts, bytes).
+Overflow: **panics** in debug builds and silently wraps in release. To choose explicitly: `x.checked_add(y)` → `Option`, `wrapping_add`, `saturating_add`.
+
 ## Strings
 | | |
 |---|---|
@@ -113,6 +128,17 @@ res.map_err(|e| ...) / .ok()
 panic!("boom")                      // unrecoverable ≈ RuntimeException that you don't catch
 ```
 Errors in apps: `anyhow` crate. In libraries: `thiserror` crate.
+
+### Panics
+`Result` = expected failure (≈ checked exception). Panic = bug or broken invariant (≈ uncaught RuntimeException).
+On a panic Rust prints the message, unwinds the stack (runs `Drop`), and kills the thread. Main thread → exit code 101. `RUST_BACKTRACE=1` for a stack trace.
+
+Triggers: `panic!`, `unwrap`/`expect` on `None`/`Err`, `v[i]` out of bounds, integer overflow (debug only), divide by zero, `todo!`/`unimplemented!`/`unreachable!`, failed `assert!`, `RefCell` double mutable borrow, slicing a `&str` mid-character.
+
+- Spawned thread panics → `join()` returns `Err`. The program keeps running.
+- `catch_unwind` exists. Use it only at FFI/thread-pool boundaries, not as try/catch.
+- `panic = "abort"` in `[profile]` skips unwinding: smaller binary, no `Drop`.
+- Libraries return `Result`. `unwrap` belongs in tests and prototypes. Where failure can't happen, write `expect("why")`.
 
 ## Traits (≈ interface, more powerful)
 ```rust
