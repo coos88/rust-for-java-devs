@@ -241,6 +241,34 @@ impl Speak for i32 { ... }          // implement for types you didn't write
 ```
 Common std traits: `Debug` (toString for devs), `Display` (toString for users), `Clone`, `Copy`, `PartialEq/Eq` (equals), `Hash` (hashCode), `PartialOrd/Ord` (Comparable), `Default`, `From/Into` (conversions), `Iterator`, `Drop` (destructor).
 
+### derive: auto-implement a trait
+There's no `Object` base class, so a new type can't print, compare, copy or hash itself until you implement those traits. `#[derive(...)]` asks the compiler to write the `impl` for you, field by field:
+
+```rust
+#[derive(PartialEq)]
+struct Point { x: i32, y: i32 }
+
+// generates (roughly):
+impl PartialEq for Point {
+    fn eq(&self, other: &Point) -> bool { self.x == other.x && self.y == other.y }
+}
+```
+
+| derive | gives you | Java |
+|---|---|---|
+| `Debug` | `{:?}` printing | IDE-generated `toString()` |
+| `Clone` | `.clone()` deep copy | `clone()` / copy constructor |
+| `Copy` | implicit copy instead of move (needs `Clone`, only for all-`Copy` fields) | primitives' behavior |
+| `PartialEq`, `Eq` | `==`, `!=` | `equals()` |
+| `Hash` | usable as a `HashMap` key (with `Eq`) | `hashCode()` |
+| `PartialOrd`, `Ord` | `<`, `>`, `.sort()`: compares fields in declaration order | `Comparable` |
+| `Default` | `Type::default()`: every field set to its default (0, "", false, None) | no-arg constructor |
+
+- Every field must implement the trait too, or the derive fails (e.g. a struct holding an `f64` can't derive `Eq`).
+- Crates add their own derives: `Serialize`/`Deserialize` (serde), `Parser` (clap), `Error` (thiserror).
+- Need custom behavior (e.g. `PartialEq` that ignores one field)? Skip the derive and write the `impl` by hand.
+- `cargo install cargo-expand` → `cargo expand` shows the generated code.
+
 ## Generics
 ```rust
 fn biggest<T: PartialOrd>(xs: &[T]) -> &T { ... }
@@ -328,7 +356,7 @@ Async: `async fn`, `.await`, needs a runtime (`tokio`). `Future` ≈ `Completabl
 
 | Rust | Java | what |
 |---|---|---|
-| `#[derive(Debug, Clone, PartialEq)]` | Lombok `@ToString @EqualsAndHashCode` | generate trait impls |
+| `#[derive(Debug, Clone, PartialEq)]` | Lombok `@ToString @EqualsAndHashCode` | generate trait impls (see Traits → derive) |
 | `#[test]`, `#[should_panic]` | `@Test`, `assertThrows` | mark tests |
 | `#[cfg(test)]` | none | compile this only for `cargo test` |
 | `#[cfg(target_os = "macos")]` | none (runtime `if`) | compile only on that platform. The code doesn't exist elsewhere |
