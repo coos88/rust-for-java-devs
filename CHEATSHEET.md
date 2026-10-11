@@ -1,6 +1,7 @@
 # Rust cheat sheet (for Java devs)
 
 ## Variables & types
+
 | Rust | Java |
 |---|---|
 | `let x = 5;` | `final var x = 5;` (immutable by default) |
@@ -33,6 +34,7 @@ Java has no unsigned types (except `char`). Use `u*` when negative values make n
 Overflow: **panics** in debug builds and silently wraps in release. To choose explicitly: `x.checked_add(y)` → `Option`, `wrapping_add`, `saturating_add`.
 
 ## Strings
+
 | | |
 |---|---|
 | `String` | owned, growable, heap (`StringBuilder`-ish) |
@@ -162,6 +164,7 @@ Monomorphized: one copy of code per concrete type (fast, no erasure, bigger bina
 `Box<dyn Trait>` = runtime polymorphism (≈ Java's interface reference, vtable).
 
 ## Collections
+
 | Rust | Java |
 |---|---|
 | `Vec<T>`, `vec![1,2]` | `ArrayList` |
@@ -194,6 +197,7 @@ pub(crate) fn y() {}  // package-private-ish
 crate = compilation unit (jar). Module = package. File = module.
 
 ## Smart pointers
+
 | | |
 |---|---|
 | `Box<T>` | heap allocate, single owner |

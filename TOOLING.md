@@ -1,6 +1,7 @@
 # Tooling
 
 ## The pieces
+
 | Rust | Java |
 |---|---|
 | `rustup` | SDKMAN. Installs/switches toolchains (`rustup update`, `rustup default stable`) |
@@ -18,6 +19,7 @@
 | rust-analyzer | the IDE language server (in RustRover/VS Code) |
 
 ## Cargo vs mvn
+
 | cargo | mvn |
 |---|---|
 | `cargo new app` / `--lib` | archetype:generate |
@@ -72,6 +74,7 @@ lto = true
 6. **Never pruned.** Old artifacts stay until you `cargo clean`.
 
 ### Fixes
+
 | | |
 |---|---|
 | `cargo clean` | nuke it. Rebuild costs minutes, not data |
