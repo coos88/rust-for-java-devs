@@ -3,6 +3,7 @@
 What each dependency in `slopforge2/v2` does, with the Java equivalent. Based only on the `Cargo.toml` files.
 
 ## Crate map (inferred from names + deps)
+
 | crate | type | role |
 |---|---|---|
 | `sf-proto` | lib | shared protocol/message types (serde), socket IO |
@@ -17,6 +18,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 | `uat` (`sf-uat`) | tests | end-to-end acceptance tests |
 
 ## Core
+
 | crate | what | Java |
 |---|---|---|
 | `serde` | (de)serialization framework. `#[derive(Serialize, Deserialize)]` generates the code at compile time | Jackson annotations |
@@ -29,6 +31,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 | `clap` | CLI arg parsing via `#[derive(Parser)]` on a struct | picocli |
 
 ## Async & logging
+
 | crate | what | Java |
 |---|---|---|
 | `tokio` | async runtime: scheduler, timers, sockets, processes, signals, channels. Features enable only what you use (`net`, `time`, `process`, …) | Netty + `ExecutorService` + NIO |
@@ -36,6 +39,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 | `tracing-subscriber` | the backend that prints logs. `env-filter` = `RUST_LOG=debug` | Logback + logback.xml |
 
 ## OS / system
+
 | crate | what | Java |
 |---|---|---|
 | `libc` | raw C bindings to the OS (unsafe) | JNI/Panama |
@@ -47,6 +51,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 | `tray-icon` | menu bar / system tray icon | `java.awt.SystemTray` |
 
 ## GUI
+
 | crate | what | Java |
 |---|---|---|
 | `egui` | **immediate-mode** GUI: you redraw the whole UI every frame from your state. No widget objects, no listeners | none. Opposite of Swing/JavaFX |
@@ -56,6 +61,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 | `image` | image encode/decode (PNG here, for snapshots) | `ImageIO` |
 
 ## Test-only
+
 | crate | what | Java |
 |---|---|---|
 | `assert_cmd` | run your binary, assert on exit code/stdout | ProcessBuilder in a test |
