@@ -4,7 +4,7 @@
 
 | Rust | Java |
 |---|---|
-| `rustup` | SDKMAN. Installs/switches toolchains (`rustup update`, `rustup default stable`) |
+| `rustup` | SDKMAN. Installs/switches toolchains (`rustup update`, `rustup default stable`). This repo needs Rust ≥ 1.88 |
 | `rustc` | `javac`, but outputs a native binary. You rarely call it directly |
 | `cargo` | Maven + `java` launcher + dependency manager, in one |
 | `Cargo.toml` | `pom.xml` |
@@ -59,7 +59,7 @@ lto = true
 
 ## How compilation works
 - **Unit = crate**, not a file. Your crate plus every dependency is compiled **from source** on your machine.
-- Pipeline: parse → macro expansion → type check + **borrow check** → MIR → LLVM → machine code → link into one static binary.
+- Pipeline: parse → macro expansion → type check + **borrow check** → LLVM → machine code → link into one binary. All crates are linked in statically; only the system libc is linked dynamically.
 - No runtime and no VM. The binary is everything, built for one OS/CPU target (`--target x86_64-unknown-linux-gnu` cross-compiles).
 - **Generics are monomorphized**: `Vec<i32>` and `Vec<String>` each get their own machine code. Fast at runtime, slow to compile.
 - Incremental compilation caches the work for your crate. Deps compile once per profile/feature set.

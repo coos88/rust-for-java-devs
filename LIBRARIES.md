@@ -73,7 +73,7 @@ What each dependency in `slopforge2/v2` does, with the Java equivalent. Based on
 - **`default-features = false`**: turn off the crate's defaults, then opt in (`keyring`, `ureq`, `image`).
 - **`{ path = "../sf-proto" }`**: local crate dependency ≈ a sibling Maven module.
 - **`[workspace.package]` + `edition.workspace = true`**: inherited settings ≈ a parent POM.
-- **`[workspace.lints.rust] unsafe_code = "forbid"`**: build fails on any `unsafe`. `sf-hold` sets `allow`; `sfd` sets `deny` so one module can opt out.
+- **`[workspace.lints.rust] unsafe_code = "forbid"`**: build fails on any `unsafe`. `forbid` can't be overridden, so `sf-hold` and `sfd` skip the workspace lints and set their own: `allow`, and `deny`. A `deny` can still be lifted per module with `#![allow(unsafe_code)]`.
 - **`[profile.dev] debug = 0`**: no debug info, to keep `target/` small (see [Tooling](TOOLING.md)).
 - **`[profile.dev.package.X] opt-level = 1/3`**: optimize only hot dependencies (SQLite, egui, PNG) in dev builds; your own code stays unoptimized and debuggable.
 - **`[[bin]]`, `[[example]]`, `[[test]]`**: extra build targets. `harness = false` means the test file has its own `fn main()` instead of using `#[test]`.

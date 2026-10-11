@@ -3,6 +3,7 @@
 //
 // 1. fizzbuzz(n) -> String for 1..=15, print each line.
 // 2. Use `match` on a tuple (n % 3, n % 5), not if/else.
+//    All arms must return String: "Fizz".to_string(), n.to_string().
 // 3. Try reassigning a non-`mut` variable. Read the error.
 
 fn fizzbuzz(n: u32) -> String {

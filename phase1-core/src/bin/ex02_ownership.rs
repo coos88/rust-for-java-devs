@@ -1,11 +1,13 @@
 // Ex02: ownership, moves, borrowing
 // cargo run -p phase1 --bin ex02_ownership
 //
-// Uncomment one block at a time. Make it compile WITHOUT .clone().
-// Before fixing, explain to yourself why it failed.
+// Uncomment one block at a time.
+// A-D don't compile: fix each WITHOUT .clone(). Any other fix is fine, reordering lines included.
+// E-F do compile: explain why.
+// Before fixing anything, explain to yourself why it failed.
 
 fn takes(s: String) -> usize { s.len() }
-fn borrows(s: &String) -> usize { s.len() }
+fn borrows(s: &str) -> usize { s.len() }
 fn appends(s: &mut String) { s.push('!'); }
 
 fn main() {
@@ -26,6 +28,16 @@ fn main() {
 
     // D: return a reference to a local. Fix by changing the return type.
     // fn make() -> &String { let s = String::from("x"); &s }
+
+    // E: compiles. Why is `a` still usable when A's `s` wasn't?
+    // let a = 5;
+    // let b = a;
+    // println!("{a} {b}");
+
+    // F: compiles. Why doesn't .len() move `s` when takes(s) does?
+    // let s = String::from("hi");
+    // s.len();
+    // println!("{s}");
 
     let _ = (takes, borrows, appends);
 }

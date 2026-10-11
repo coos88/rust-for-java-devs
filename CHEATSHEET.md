@@ -18,6 +18,8 @@
 
 No `null`. Use `Option<T>`.
 
+Unlike `final`, `let` also freezes the **contents**: `let v = vec![]; v.push(1)` fails. `mut` = may reassign *and* mutate in place. `&mut x` needs `let mut x`.
+
 ### Signed vs unsigned
 Same bits, different range. Signed spends one bit on the sign.
 
@@ -38,13 +40,13 @@ Overflow: **panics** in debug builds and silently wraps in release. To choose ex
 | | |
 |---|---|
 | `String` | owned, growable, heap (`StringBuilder`-ish) |
-| `&str` | borrowed view into string data. Literals are `&'static str` |
+| `&str` | borrowed view into string data. Literals are `&'static str` (`'static` = lives for the whole program, see Lifetimes) |
 | `s.to_string()`, `String::from("x")` | `&str` → `String` |
 | `&s`, `s.as_str()` | `String` → `&str` |
 | `format!("{a} {}", b)` | `String.format` |
 | `println!("{x:?}")` | `{:?}` = debug print, `{:#?}` = pretty |
 
-Function params: take `&str`, return `String`.
+Function params: take `&str`, return `String`. `&String` auto-converts to `&str` (and `&Vec<T>` to `&[T]`), so one `&str` param accepts both kinds.
 
 ## Control flow (everything is an expression)
 
@@ -52,7 +54,7 @@ Function params: take `&str`, return `String`.
 |---|---|
 | `c ? a : b` | `if c { a } else { b }` |
 | `if (x > 0)` | `if x > 0` (no parens, braces required) |
-| `if (list)` / truthy | none. The condition must be a `bool` |
+| `if (list)` (JS/PHP truthiness) | none. The condition must be a `bool` |
 | `switch` | `match` (exhaustive, no fallthrough, no `break`) |
 | `for (int i=0; i<n; i++)` | `for i in 0..n` |
 | `for (var x : list)` | `for x in &list` |
@@ -80,7 +82,7 @@ fn double(n: i32) -> i32 {
     n * 2              // a fn body is a block too. That's why `return` is optional
 }
 ```
-Java has no equivalent. There, `if` and `{ }` are statements and produce nothing.
+In Java, `if` and `{ }` are statements and produce nothing. The nearest Java thing is a switch expression (`case 1 -> ...`, `yield`). `match` ≈ Java 21 pattern-matching `switch` on a sealed interface: exhaustive, and it yields a value.
 
 ### Loops
 ```rust
@@ -150,7 +152,8 @@ Inside a closure, `return` returns from the closure, not from the outer fn.
 fn add(a: i32, b: i32) -> i32 { a + b }   // last expr = return value (no `;`)
 fn f() { return; }                         // explicit return for early exit
 let sq = |x: i32| x * x;                   // closure = lambda
-let sq = move |x| x * n;                   // `move`: takes ownership of captured vars
+let sq = move |x| x * n;                   // `move`: takes ownership of captured vars. Needed when the
+                                           // closure outlives this scope (thread::spawn, returning it)
 ```
 No overloading, no default args, no varargs (use macros/builders).
 
@@ -160,6 +163,8 @@ No overloading, no default args, no varargs (use macros/builders).
 3. Borrow with `&T` (shared, read-only, many allowed) **or** `&mut T` (exclusive, one allowed). Never both at once.
 4. A reference can't outlive what it points to.
 
+Why rule 3: it's `ConcurrentModificationException` (and data races) turned into a compile error. Nobody can change a thing while someone else is reading it.
+
 ```rust
 let a = String::from("x");
 let b = a;            // move. `a` unusable
@@ -168,12 +173,13 @@ f(&c);                // lend read-only
 g(&mut d);            // lend mutable
 ```
 `Copy` types (ints, floats, bool, char, tuples of Copy) are copied, not moved.
-Java analogy: every object is a unique `final` pointer the compiler tracks. GC replaced by scope.
+Method calls borrow automatically: `s.len()` doesn't move `s`.
+Java analogy: every object is held by exactly one variable, and the compiler tracks which one. GC replaced by scope.
 
 ## Structs & impl (≈ class, minus inheritance)
 ```rust
 #[derive(Debug, Clone, PartialEq)]          // auto-generate toString/clone/equals
-pub struct User { pub name: String, age: u32 }
+pub struct User { pub name: String, pub age: u32 }   // fields are private unless `pub`
 
 impl User {
     pub fn new(name: &str) -> Self { Self { name: name.into(), age: 0 } }  // "constructor" is a convention
@@ -182,7 +188,7 @@ impl User {
     fn into_name(self) -> String { self.name } // self = consumes object
 }
 let u = User::new("coos");                  // static call ::, method call .
-let u2 = User { age: 3, ..u };              // struct update syntax
+let u2 = User { age: 3, ..u };              // struct update syntax. Moves non-Copy fields (name) out of u
 struct Meters(f64);                         // tuple struct / newtype
 ```
 
@@ -202,6 +208,8 @@ enum Option<T> { Some(T), None }
 enum Result<T, E> { Ok(T), Err(E) }
 
 let n: i32 = "5".parse()?;          // `?` = return Err early (≈ throws, but explicit)
+                                    // only inside a fn returning Result/Option (main too: fn main() -> Result<(), E>)
+                                    // converts the error via `From`, which is why anyhow::Error accepts any error
 opt.unwrap()                        // panic if None. Prototypes/tests only
 opt.expect("msg")                   // unwrap with message
 opt.unwrap_or(0) / .unwrap_or_default()
@@ -213,7 +221,7 @@ Errors in apps: `anyhow` crate. In libraries: `thiserror` crate.
 
 ### Panics
 `Result` = expected failure (≈ checked exception). Panic = bug or broken invariant (≈ uncaught RuntimeException).
-On a panic Rust prints the message, unwinds the stack (runs `Drop`), and kills the thread. Main thread → exit code 101. `RUST_BACKTRACE=1` for a stack trace.
+On a panic Rust prints the message, unwinds the stack, and kills the thread. Unwinding = walk back up the call stack running every `Drop` on the way, so files and locks get released (like `finally` blocks during exception propagation). Main thread → exit code 101. `RUST_BACKTRACE=1` for a stack trace.
 
 Triggers: `panic!`, `unwrap`/`expect` on `None`/`Err`, `v[i]` out of bounds, integer overflow (debug only), divide by zero, `todo!`/`unimplemented!`/`unreachable!`, failed `assert!`, `RefCell` double mutable borrow, slicing a `&str` mid-character.
 
@@ -236,12 +244,14 @@ Common std traits: `Debug` (toString for devs), `Display` (toString for users), 
 ## Generics
 ```rust
 fn biggest<T: PartialOrd>(xs: &[T]) -> &T { ... }
-fn show(x: impl Display) {}               // shorthand
+fn show(x: impl Display) {}               // shorthand for a generic, not dyn
 fn f<T>(x: T) where T: Clone + Debug {}   // where clause
 struct Wrapper<T> { v: T }
 ```
 Monomorphized: one copy of code per concrete type (fast, no erasure, bigger binaries).
 `Box<dyn Trait>` = runtime polymorphism (≈ Java's interface reference, vtable).
+
+Generics vs `dyn`: `fn f<T: Trait>(xs: &[T])` gets one concrete `T` per call, so all elements have the same type. `&[Box<dyn Trait>]` can mix types, resolved at runtime. Use generics by default and `dyn` for mixed collections.
 
 ## Collections
 
@@ -254,7 +264,7 @@ Monomorphized: one copy of code per concrete type (fast, no erasure, bigger bina
 | `VecDeque` | `ArrayDeque` |
 | `&[T]` slice | view into array/Vec |
 
-`map.entry(k).or_insert(0)` ≈ `computeIfAbsent`. `v[i]` panics out of bounds. `v.get(i)` → `Option`.
+`map.entry(k).or_insert(0)` ≈ `computeIfAbsent`. It returns `&mut V`, so a counter is `*map.entry(k).or_insert(0) += 1`. `v[i]` panics out of bounds. `v.get(i)` → `Option`.
 
 ## Iterators (≈ Streams, lazy, zero-cost)
 ```rust
@@ -262,21 +272,24 @@ v.iter()        // yields &T
 v.iter_mut()    // yields &mut T
 v.into_iter()   // yields T, consumes v
 v.iter().filter(|x| **x > 1).map(|x| x * 2).collect::<Vec<_>>();
-.sum() .count() .max() .min_by_key(f) .any(f) .all(f) .find(f) .fold(0, f)
+                // iter() yields &T, filter passes a ref to that: &&T, hence **
+v.iter().copied()   // &T → T (Copy types). .cloned() for Clone types
+.sum() .count() .max() .max_by_key(f) .min_by_key(f) .any(f) .all(f) .find(f) .fold(0, f)
 .enumerate() .zip(other) .rev() .take(n) .skip(n) .chain(o) .flat_map(f)
 ```
 
 ## Modules & visibility
 ```rust
-mod net;              // loads net.rs or net/mod.rs
+mod net;              // loads net.rs or net/mod.rs. A file is only compiled if a `mod` line names it
 use std::collections::HashMap;
 use crate::net::Client;   // crate:: = project root, super:: = parent
 pub fn x() {}         // public. Default is private (to the module)
 pub(crate) fn y() {}  // package-private-ish
 ```
-crate = compilation unit (jar). Module = package. File = module.
+crate = compilation unit (jar). Module = package. File = module, *once declared with `mod`*.
 
 ## Smart pointers
+`Rc`/`Arc` give shared ownership, but only `&T` (read-only) because of ownership rule 3. `RefCell`/`Mutex` add mutation back, checked at runtime (within one thread / across threads). Hence `Arc<Mutex<T>>`.
 
 | | |
 |---|---|
@@ -292,7 +305,9 @@ Typical shared mutable state: `Arc<Mutex<T>>`.
 ```rust
 fn longest<'a>(a: &'a str, b: &'a str) -> &'a str
 ```
-Not a duration. A label telling the compiler "the output borrows from these inputs". Usually inferred. `'static` = lives for the whole program.
+Not a duration. A label telling the compiler "the output borrows from these inputs". `<'a>` declares the label, like `<T>`.
+You only write them when a fn returns a reference and takes more than one reference, or a struct holds a reference (`struct View<'a> { s: &'a str }`). Everywhere else they're inferred. Error E0106 "missing lifetime specifier" = add one, or return an owned value.
+`'static` = lives for the whole program.
 
 ## Concurrency
 ```rust
@@ -300,6 +315,7 @@ std::thread::spawn(move || { ... }).join();
 let (tx, rx) = std::sync::mpsc::channel();
 ```
 `Send` = may move to another thread. `Sync` = may be shared between threads. Compiler enforces both: no data races.
+`Rc` and `RefCell` are neither, which is the compiler forcing you to `Arc`/`Mutex` when a value crosses threads. The error says "cannot be sent between threads safely".
 Async: `async fn`, `.await`, needs a runtime (`tokio`). `Future` ≈ `CompletableFuture`, but lazy.
 
 ## Macros

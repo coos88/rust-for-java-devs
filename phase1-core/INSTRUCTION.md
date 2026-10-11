@@ -1,6 +1,7 @@
 # Phase 1: core language
 
 Six exercises in `src/bin/`. Each file lists its tasks at the top.
+Write the types and functions above `main`, call them from `main`, and print the results. Phase 1 uses no `cargo test`: running it is the check.
 
 ```
 cargo run -p phase1 --bin ex01_basics
