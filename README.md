@@ -5,6 +5,7 @@ Compact Rust reference and exercises, mapped from Java.
 - [Cheat sheet](CHEATSHEET.md): the whole language
 - [Tooling](TOOLING.md): cargo vs mvn, the compiler, why `target/` gets huge
 - [In practice](PRACTICE.md): crashes, memory, deployment, ecosystem. Life without a JVM
+- [Libraries](LIBRARIES.md): every crate slopforge v2 uses, mapped to Java
 
 ## Exercises
 - [Phase 1: core language](phase1-core/INSTRUCTION.md)
