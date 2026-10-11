@@ -61,11 +61,26 @@ Function params: take `&str`, return `String`.
 | `i++` | `i += 1` (no `++`/`--`) |
 | `try/catch` | `match` on `Result`, or `?` |
 
-### if / blocks
+### Blocks return values (so `if` does too)
+Every `{ }` block evaluates to its last line, if that line has no `;`. A trailing `;` makes the value `()`.
+
 ```rust
-let y = if x > 0 { "pos" } else if x < 0 { "neg" } else { "zero" };  // branch types must match
-let z = { let a = 2; a * 3 };     // a block is an expression: its last line (no `;`) is its value
+let z = {              // plain block
+    let a = 2;
+    a * 3              // no `;` → the block's value. z = 6
+};
+
+let y = if x > 0 {     // `if` branches are blocks, so `if` has a value. This is Rust's ternary
+    "pos"
+} else {
+    "neg"              // every branch must return the same type
+};
+
+fn double(n: i32) -> i32 {
+    n * 2              // a fn body is a block too. That's why `return` is optional
+}
 ```
+Java has no equivalent. There, `if` and `{ }` are statements and produce nothing.
 
 ### Loops
 ```rust
