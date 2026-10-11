@@ -1,0 +1,3 @@
+[workspace]
+members = ["phase1-core", "phase3-advanced"]
+resolver = "3"
