@@ -47,23 +47,88 @@ Overflow: **panics** in debug builds and silently wraps in release. To choose ex
 Function params: take `&str`, return `String`.
 
 ## Control flow (everything is an expression)
+
+| Java | Rust |
+|---|---|
+| `c ? a : b` | `if c { a } else { b }` |
+| `if (x > 0)` | `if x > 0` (no parens, braces required) |
+| `if (list)` / truthy | none. The condition must be a `bool` |
+| `switch` | `match` (exhaustive, no fallthrough, no `break`) |
+| `for (int i=0; i<n; i++)` | `for i in 0..n` |
+| `for (var x : list)` | `for x in &list` |
+| `do { } while (c)` | `loop { ...; if !c { break; } }` |
+| `while (true)` | `loop` |
+| `i++` | `i += 1` (no `++`/`--`) |
+| `try/catch` | `match` on `Result`, or `?` |
+
+### if / blocks
 ```rust
-let y = if x > 0 { "pos" } else { "neg" };   // no ternary, this is it
-let v = loop { break 42; };                  // loop returns a value
+let y = if x > 0 { "pos" } else if x < 0 { "neg" } else { "zero" };  // branch types must match
+let z = { let a = 2; a * 3 };     // a block is an expression: its last line (no `;`) is its value
+```
+
+### Loops
+```rust
+loop { if done() { break; } }               // infinite
+let v = loop { break 42; };                 // break with a value (loop only)
 while n > 0 { n -= 1; }
-for i in 0..10 {}      // 0..=10 inclusive
-for x in &vec {}       // borrow elements
-'outer: for ... { break 'outer; }
+while let Some(top) = stack.pop() { }       // loop until the pattern stops matching
+
+for i in 0..10 {}                           // 0..9.   0..=10 inclusive
+for i in (0..10).rev() {}                   // 9..0
+for i in (0..10).step_by(2) {}              // 0,2,4..
+for x in &v {}                              // x: &T,     v still usable
+for x in &mut v { *x += 1; }                // x: &mut T, modify in place
+for x in v {}                               // x: T,      v is moved (gone after)
+for (i, x) in v.iter().enumerate() {}       // index + value
+
+'outer: for a in 0..5 {                     // labels
+    for b in 0..5 {
+        if b == 2 { continue 'outer; }
+        if a == 3 { break 'outer; }
+    }
+}
+```
+
+### match
+```rust
 match n {
     0 => "zero",
-    1 | 2 => "small",
-    3..=9 => "mid",
-    x if x < 0 => "neg",   // guard
-    _ => "big",            // default; match must be exhaustive
+    1 | 2 => "small",                       // or
+    3..=9 => "mid",                         // range
+    x if x < 0 => "neg",                    // guard
+    _ => "big",                             // catch-all. Must cover every case or it won't compile
 }
-if let Some(x) = opt { }
-let Some(x) = opt else { return; };          // early exit
+
+match point {                               // destructure
+    (0, 0) => "origin",
+    (_, 0) | (0, _) => "on axis",
+    _ => "elsewhere",
+}
+match &user {                               // match on a ref: fields bind as refs
+    User { age: 0..18, .. } => "minor",     // struct pattern, `..` ignores the rest
+    User { name, .. } => name.as_str(),
+}
+match msg {
+    Msg::Move { x, y } => {}                // enum variant with fields
+    Msg::Write(text) => {}
+    Msg::Quit => {}
+}
+match n { id @ 1..=9 => id, _ => 0 }        // @ binds the matched value
+let ok = matches!(c, 'a'..='z' | '_');      // match as a bool
 ```
+
+### if let / let else
+```rust
+if let Some(x) = opt { } else { }           // match one pattern, ignore the rest
+if let Some(x) = opt && x > 0 { }           // let chains (edition 2024)
+let Some(x) = opt else { return; };         // must match, else diverge (return/break/panic)
+                                            // x stays in scope after. Great for early exits
+```
+
+### Early exit
+`return` (from fn), `break`/`continue` (loops), `?` (return the error), `panic!` (crash).
+Inside a closure, `return` returns from the closure, not from the outer fn.
 
 ## Functions
 ```rust
