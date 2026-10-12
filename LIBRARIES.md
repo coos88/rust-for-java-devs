@@ -1,6 +1,6 @@
-# Libraries in slopforge v2
+# Libraries
 
-What each dependency in `slopforge2/v2` does, with the Java equivalent. Based only on the `Cargo.toml` files.
+What each dependency does, with the Java equivalent. Based only on the `Cargo.toml` files.
 
 ## Crate map (inferred from names + deps)
 
